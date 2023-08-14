@@ -6,8 +6,11 @@ async function login(db, email, password) {
         const user = await db.collection('user').findOne(query);
         if (!user) {
             console.log('User not found');
+            return null
         }
+       else {
         return user;
+       }
     } catch (error) {
         console.error('Error during login:', error);
         throw error;
