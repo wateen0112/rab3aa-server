@@ -36,7 +36,7 @@ async function connectToMongo() {
     //     address:'addresssss'
     // })
     // createUserCollection(db)
-
+return db
   } catch(error){
     throw(error)
   }
