@@ -1,4 +1,5 @@
     const express = require('express');
+    const cors = require('cors');
     const axios = require('axios');
     const { sendEmail } = require('./mailer');
     const { MongoClient, ServerApiVersion } = require('mongodb');
@@ -6,6 +7,7 @@
     const qr = require('qrcode');
     const app = express();
     app.use(express.json());
+    app.use(cors());
     app.use(express.urlencoded({ extended: true })); // Add this line to parse form data
     const port = 8000;
     const uri = "mongodb+srv://wateen:NDYUeZUpoXojhpFe@cluster0.cvsgln9.mongodb.net/?retryWrites=true&w=majority";
