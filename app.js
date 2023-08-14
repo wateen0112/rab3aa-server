@@ -29,7 +29,7 @@ let db  = null;
         const user = await login(db , req.body.email ,req.body.password )
         
         if(!user){
-            res.error(400).json('معلومات خاطثة')
+            res.status(400).send('معلومات خاطثة')
         }
         else {
             res.send({user})
