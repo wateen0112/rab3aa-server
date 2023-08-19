@@ -17,7 +17,13 @@ async function login(db, email, password) {
     }
 }
 async function createUser (db,user){
-    const u = await db.collection('user').insertOne({...user});
+    let u = null
+  try {
+    u = await db.collection('user').insertOne({...user});
+  } catch (error) {
+    u=error;
+    throw(error)
+  }
 return u ;
 }
 async function  sendOtp (db , email ){

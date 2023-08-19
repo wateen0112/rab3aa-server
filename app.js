@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const {createMedicineCollection,addNewMedicine} = require('./models/medicine')
 const {createPharmacyCollection,addNewPharmacy} = require('./models/pharmacy')
 const { sendEmail } = require('./mailer');
 const {createDoctorCollection,addNewDoctor}  = require('./models/doctor')
@@ -39,8 +40,63 @@ app.post ('/login' ,async(req , res)=>{
     }
 })
 app.post ('/register',async(req,res)=>{
-const data = createUser(db,{...req.body});
-res.send(data)
+    let data = null
+try {
+     data =await  createUser(db,{...req.body});
+     res.send(data)
+    } catch (error) {
+    res.status(500).json('register error' ,error.message )
+}
+
+})
+app.delete('/users/',async (req, res)=>{
+    let r = null ; 
+    try {
+        r= await db.collection('user').deleteMany({},(error , obj)=>{
+            if(!error){
+              
+            }
+            else {
+            
+                throw(error)
+            }
+        })
+        res.send('all deleted')
+    } catch (error) {
+        res.status(500).json('cannot delete' , error.message)
+    }
+})
+app.get('/users/all',async(req , res)=>{
+    let rr = null
+    try {
+      
+     rr = await db.collection('user').find({}).toArray((res)=>{
+       let userArray = [];
+       res.forEach(e => {
+        userArray.push({
+
+            
+        _id: e._id,
+        first_name: e.first_name,
+        last_name: e.last_name,
+        salary: e.salary,
+        num_of_children: e.num_of_children,
+        email:e._id,
+        
+     
+        address: e.address,
+        phone_number: e.phone_number,
+        union: e.union,
+        is_married: e.is_married,
+        })
+        
+       });
+     })
+
+    } catch (error) {
+        res.send(error);
+    }
+    res.send(rr)
 })
 app.post('/sendEmail', async (req, res) => {
 try {
@@ -243,6 +299,59 @@ app.get('/pharmacy/:id', async (req, res) => {
       });
       
     ///////////////
+     
+
+
+// medicine . . .
+app.post('/createMedicineCollection',async(req , res)=>{
+      try {
+    await  createMedicineCollection(db);
+    res.send('Done !')
+    } catch (error) {
+        res.status(500).json({ message: 'Error creating Collection', error: error.message });
+    }
+    
+})
+app.post ('/medicine/addNew', async (req , res)=>{
+    try {
+        const rr = await addNewMedicine (db,req.body);
+    res.send(rr)
+    } catch (error) {
+           res.status(500).json({ message: 'Error Adding new Medicine', error: error.message });
+
+    }
+})
+app.get('/medicine/',async(req, res)=>{
+    let rr = null
+    try {
+      
+     rr = await db.collection('medicine').find({}).toArray((res)=>{
+        console.log(res);
+  
+     })
+
+    } catch (error) {
+        res.send(error);
+    }
+    res.send(rr)
+})
+app.get('/medicine/:id', async (req, res) => {
+    const id = req.params.id;
+    
+    try {
+      const item = await db.collection('medicine').findOne({ _id:  new ObjectId(id) });
+      
+      if (!item) {
+        return res.status(404).json({ message: 'Item not found' });
+      }
+  
+      res.json(item);
+    } catch (error) {
+      res.status(500).json({ message: 'Error retrieving item', error: error.message });
+    }
+  });
+
+//
 app.post('/generateqr',(req ,res)=>{
 
     const urlParam = 'https://www.facebook.com'

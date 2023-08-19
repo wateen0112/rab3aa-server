@@ -16,7 +16,7 @@ async function addNewDoctor (db , dto){
         const res = await db.collection('doctor').insertOne({...dto})
    r=res;
     } catch (error) {
-        r=err
+        r=error
         throw(error)
     }
     return r  ; 
