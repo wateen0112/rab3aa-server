@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const {createOperationCollection,addNewOperation} = require('./models/operation')
 const {createMedicineCollection,addNewMedicine} = require('./models/medicine')
 const {createPharmacyCollection,addNewPharmacy} = require('./models/pharmacy')
 const { sendEmail } = require('./mailer');
@@ -67,18 +68,25 @@ app.delete('/users/',async (req, res)=>{
     }
 })
 app.get('/users/all',async(req , res)=>{
-    let rr = null
+    let rr = null;
+    let userArray = [];
     try {
       
      rr = await db.collection('user').find({}).toArray((res)=>{
-       let userArray = [];
-       res.forEach(e => {
+      
+    
+     })
+
+    } catch (error) {
+        res.send(error);
+    }
+    rr.forEach(e => {
         userArray.push({
 
             
         _id: e._id,
-        first_name: e.first_name,
-        last_name: e.last_name,
+        full_name: e.full_name,
+   
         salary: e.salary,
         num_of_children: e.num_of_children,
         email:e._id,
@@ -91,13 +99,50 @@ app.get('/users/all',async(req , res)=>{
         })
         
        });
-     })
-
-    } catch (error) {
-        res.send(error);
-    }
-    res.send(rr)
+    res.send(userArray)
 })
+app.get('/users/:id',async(req , res)=>{
+    const id = req.params.id;
+    
+    try {
+      const item = await db.collection('user').findOne({ _id:  new ObjectId(id) });
+      
+      if (!item) {
+        return res.status(404).json({ message: 'Item not found' });
+      }
+  
+      res.json(item);
+    } catch (error) {
+      res.status(500).json({ message: 'Error retrieving item', error: error.message });
+    }
+})
+
+// operation  . .. . 
+app.post ('/createOperationCollection',async(req, res)=>{
+    let rr = null
+    try {
+        rr = await createOperationCollection(db)
+  
+  res.send(rr).json({message:"Done !"})
+    } catch (error) {
+        res.status(500).json({message : 'unable to create collection' ,error :error.message})
+    }
+    
+})
+app.post('/operation/new',async(req, res)=>{
+let rr = null
+    try {
+         rr = await addNewOperation(db,req.body);
+
+    res.send(rr)
+    } catch (error) {
+        res.status(500).json({message:'cannot add operation' , error:error});    
+throw(error)
+    }
+})
+
+
+//
 app.post('/sendEmail', async (req, res) => {
 try {
     const { email} = req.body;
@@ -351,20 +396,40 @@ app.get('/medicine/:id', async (req, res) => {
     }
   });
 
+  app.get('/operation/:id', async (req, res) => {
+    const id = req.params.id;
+    
+    try {
+      const item = await db.collection('operation').findOne({ _id:  new ObjectId(id) });
+      
+      if (!item) {
+        return res.status(404).json({ message: 'Item not found' });
+      }
+  
+      res.json(item);
+    } catch (error) {
+      res.status(500).json({ message: 'Error retrieving item', error: error.message });
+    }
+  });
 //
-app.post('/generateqr',(req ,res)=>{
-
-    const urlParam = 'https://www.facebook.com'
-
-        generateQrCodeSVG(urlParam, (svg) => {
+app.get('/operation/generateqr/:id',(req ,res)=>{
+const id  =req.params.id
+    const urlParam = id
+try {
+    
+    generateQrCodeSVG(urlParam, (svg) => {
         // res.writeHead(200, { 'Content-Type': 'image/svg+xml' });
         // res.end(svg);
         console.log(svg);
-        res.send({svg:svg})
+        res.json(svg)
         });
+} catch (error) {
+    res.status(500).json({error:error})
+}
     
     
 })
+
 app.listen(port, () => {
 console.log(`Server is running on http://localhost:${port}`);
 
