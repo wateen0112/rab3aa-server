@@ -42,13 +42,20 @@ app.post ('/login' ,async(req , res)=>{
 })
 app.post ('/register',async(req,res)=>{
     let data = null
-try {
-     data =await  createUser(db,{...req.body});
-     res.send(data)
-    } catch (error) {
-    res.status(500).json('register error' ,error.message )
-}
+    const user =await db.collection('user').findOne({email:req.body.email})
 
+
+if(user){
+res.status(400).json({message:'البريد الالكتروني موجود مسبقا'})
+}
+else{
+    try {
+        data =await  createUser(db,{...req.body});
+        res.send(data)
+       } catch (error) {
+       res.status(500).json('register error' ,error.message )
+   }
+}
 })
 app.delete('/users/',async (req, res)=>{
     let r = null ; 
@@ -146,7 +153,22 @@ throw(error)
 app.post('/sendEmail', async (req, res) => {
 try {
     const { email} = req.body;
-   const code  =  sendOtp(db,email)
+    const user = await db.collection('user').findOne({email:email});
+    if (user){
+        const code  =  sendOtp(db,email)
+   
+        await db.collection('user').updateOne({
+            email:email
+        },
+        {
+            $set:{code:code}
+        })
+        res.send('تم ارسال كود التحقق')
+    }
+    else {
+res.status(400).json({message:'البريد الالكتروني غير موجود'})
+    }
+ 
     // console.log(`data : to : ${req.body.to}  , sub : ${req.body.subject} , text : ${req.body.text}`);
     if (!email && !code) {
     return res.status(400).json({ error: 'Missing required fields.' });
@@ -271,6 +293,7 @@ app.get('/pharmacy/',async(req, res)=>{
   
      })
 
+    // rr =await db.collection('pharmacy').deleteMany({});
     } catch (error) {
         res.send(error);
     }
@@ -321,6 +344,7 @@ app.get('/pharmacy/:id', async (req, res) => {
             console.log(res);
       
          })
+        // const res = await db.collection('medicine').deleteMany({})
     
         } catch (error) {
             res.send(error);
@@ -395,7 +419,20 @@ app.get('/medicine/:id', async (req, res) => {
       res.status(500).json({ message: 'Error retrieving item', error: error.message });
     }
   });
+  app.get('/operation/',async(req, res)=>{
+    let rr = null
+    try {
+      
+     rr = await db.collection('operation').find({}).toArray((res)=>{
+        console.log(res);
+  
+     })
 
+    } catch (error) {
+        res.send(error);
+    }
+    res.send(rr)
+})
   app.get('/operation/:id', async (req, res) => {
     const id = req.params.id;
     
@@ -420,8 +457,12 @@ try {
     generateQrCodeSVG(urlParam, (svg) => {
         // res.writeHead(200, { 'Content-Type': 'image/svg+xml' });
         // res.end(svg);
-        console.log(svg);
-        res.json(svg)
+        const svgBase64 = Buffer.from(svg).toString('base64');
+        const svgResponse = `<img src="data:image/svg+xml;base64,${svgBase64}" />`;
+
+        res.setHeader('Content-Type', 'image/svg+xml');
+        res.send(svgBase64);
+  
         });
 } catch (error) {
     res.status(500).json({error:error})
